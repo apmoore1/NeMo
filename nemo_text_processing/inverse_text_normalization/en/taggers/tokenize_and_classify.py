@@ -158,7 +158,7 @@ class ClassifyFst(GraphFst):
                 'telephone': telephone_graph,
                 'whitelist': whitelist_graph,
             }
-            for _class, _graph in class_graphs.items():
+            for _class in class_graphs.keys():
                 is_empty_graph = excluded_classes.get(_class, False)
                 if is_empty_graph:
                     class_graphs[_class] = empty_fst
