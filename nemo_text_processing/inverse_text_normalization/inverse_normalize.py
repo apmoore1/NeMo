@@ -14,7 +14,7 @@
 
 from argparse import ArgumentParser
 from time import perf_counter
-from typing import List
+from typing import Dict, List, Optional
 
 from nemo_text_processing.text_normalization.data_loader_utils import load_file, write_file
 from nemo_text_processing.text_normalization.normalize import Normalizer
@@ -30,15 +30,44 @@ class InverseNormalizer(Normalizer):
         lang: language specifying the ITN
         cache_dir: path to a dir with .far grammar file. Set to None to avoid using cache.
         overwrite_cache: set to True to overwrite .far files
+        language_excluded_classes: A dictionary of semiotic class and a boolean indicating if that class should be excluded
+            from tagging a word(s) in the given text per language. By default if None no class will be excluded, a class is
+            only excluded if explicitly stated. It expects the language's language code first and then the boolean per class.
+        language_class_weights: The weight to be applied to each of the semiotic class for each language,
+            a lower weight gives higher priority to the given class.
+            By default each class has its own default weight per language, see each language's
+            `tokenize_and_classify` class to know the default weights for the given language.
+            It expects the language's language code first and then the weighting per class.
     """
 
-    def __init__(self, lang: str = 'en', cache_dir: str = None, overwrite_cache: bool = False):
+    def __init__(
+        self,
+        lang: str = 'en',
+        cache_dir: str = None,
+        overwrite_cache: bool = False,
+        language_excluded_classes: Optional[Dict[str, Dict[str, bool]]] = None,
+        language_class_weights: Optional[Dict[str, Dict[str, float]]] = None,
+    ):
 
+        if language_excluded_classes is None:
+            language_excluded_classes = {}
+
+        if language_class_weights is None:
+            language_class_weights = {}
+
+        excluded_classes: Dict[str, bool] = {}
+        class_weights: Dict[str, float] = {}
         if lang == 'en':
             from nemo_text_processing.inverse_text_normalization.en.taggers.tokenize_and_classify import ClassifyFst
             from nemo_text_processing.inverse_text_normalization.en.verbalizers.verbalize_final import (
                 VerbalizeFinalFst,
             )
+
+            if 'en' in language_excluded_classes:
+                excluded_classes = language_excluded_classes['en']
+
+            if 'en' in language_class_weights:
+                class_weights = language_class_weights['en']
 
         elif lang == 'es':
             from nemo_text_processing.inverse_text_normalization.es.taggers.tokenize_and_classify import ClassifyFst
@@ -75,6 +104,13 @@ class InverseNormalizer(Normalizer):
             )
 
         self.tagger = ClassifyFst(cache_dir=cache_dir, overwrite_cache=overwrite_cache)
+        if lang == 'en':
+            self.tagger = ClassifyFst(
+                cache_dir=cache_dir,
+                overwrite_cache=overwrite_cache,
+                excluded_classes=excluded_classes,
+                class_weights=class_weights,
+            )
         self.verbalizer = VerbalizeFinalFst()
         self.parser = TokenParser()
         self.lang = lang
