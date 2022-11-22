@@ -112,7 +112,6 @@ class ClassifyFst(GraphFst):
                 logging.info(
                     f"The class {class_weight} does not have a custom class weight applied to it as the class does not exist."
                 )
-        print(class_weights)
 
         far_file = None
         if cache_dir is not None and cache_dir != "None":
