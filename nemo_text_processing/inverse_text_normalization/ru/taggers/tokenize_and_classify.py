@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from typing import Dict, Optional
 
 import pynini
 from nemo_text_processing.inverse_text_normalization.en.taggers.punctuation import PunctuationFst
@@ -48,10 +49,69 @@ class ClassifyFst(GraphFst):
     Args:
         cache_dir: path to a dir with .far grammar file. Set to None to avoid using cache.
         overwrite_cache: set to True to overwrite .far files
+        excluded_classes: A dictionary of semiotic class and a boolean indicating if that class should be excluded
+            from tagging a word(s) in the given text. By default if None no class will be excluded, a class is
+            only excluded if explicitly stated.
+        class_weights: The weight to be applied to each of the semiotic class,
+            a lower weight gives higher priority to the given class.
+            By default the following weights are applied if no weight is given for a class:
+            'cardinal': 1.1, 'ordinal': 1.1, 'decimal': 1.1, 'measure': 1.1, 'date': 1.09,
+            'word': 100,'time': 1.1,'money': 1.1,'electronic': 1.1,'telephone': 1.1, 'whitelist': 1.01
     """
 
-    def __init__(self, cache_dir: str = None, overwrite_cache: bool = False):
+    def __init__(
+        self,
+        cache_dir: str = None,
+        overwrite_cache: bool = False,
+        excluded_classes: Optional[Dict[str, bool]] = None,
+        class_weights: Optional[Dict[str, float]] = None,
+    ):
         super().__init__(name="tokenize_and_classify", kind="classify")
+
+        if excluded_classes is None:
+            excluded_classes = {}
+
+        classes = [
+            'cardinal',
+            'ordinal',
+            'decimal',
+            'measure',
+            'date',
+            'word',
+            'time',
+            'money',
+            'whitelist',
+            'electronic',
+            'telephone',
+        ]
+        for excluded_class in excluded_classes:
+            if excluded_class not in classes:
+                logging.info(f"The class {excluded_class} is not being excluded as the class does not exist.")
+
+        if class_weights is None:
+            class_weights = {}
+        default_class_weights = {
+            'cardinal': 1.1,
+            'ordinal': 1.1,
+            'decimal': 1.1,
+            'measure': 1.1,
+            'date': 1.09,
+            'word': 100,
+            'time': 1.1,
+            'money': 1.1,
+            'electronic': 1.1,
+            'telephone': 1.1,
+            'whitelist': 1.01,
+        }
+        for _class, weight in default_class_weights.items():
+            if _class not in class_weights:
+                class_weights[_class] = weight
+
+        for class_weight in class_weights:
+            if class_weight not in classes:
+                logging.info(
+                    f"The class {class_weight} does not have a custom class weight applied to it as the class does not exist."
+                )
 
         far_file = None
         if cache_dir is not None and cache_dir != "None":
@@ -62,6 +122,7 @@ class ClassifyFst(GraphFst):
             logging.info(f"ClassifyFst.fst was restored from {far_file}.")
         else:
             logging.info(f"Creating ClassifyFst grammars. This might take some time...")
+            empty_fst = pynini.string_map([])
             tn_classify = TNClassifyFst(
                 input_case='cased', deterministic=False, cache_dir=cache_dir, overwrite_cache=True
             )
@@ -84,18 +145,36 @@ class ClassifyFst(GraphFst):
             electronic_graph = ElectronicFst(tn_electronic=tn_classify.electronic).fst
             telephone_graph = TelephoneFst(tn_telephone=tn_classify.telephone).fst
 
+            class_graphs = {
+                'cardinal': cardinal_graph,
+                'ordinal': ordinal_graph,
+                'decimal': decimal_graph,
+                'measure': measure_graph,
+                'date': date_graph,
+                'word': word_graph,
+                'time': time_graph,
+                'money': money_graph,
+                'electronic': electronic_graph,
+                'telephone': telephone_graph,
+                'whitelist': whitelist_graph,
+            }
+            for _class in class_graphs.keys():
+                is_empty_graph = excluded_classes.get(_class, False)
+                if is_empty_graph:
+                    class_graphs[_class] = empty_fst
+
             classify = (
-                pynutil.add_weight(whitelist_graph, 1.01)
-                | pynutil.add_weight(time_graph, 1.1)
-                | pynutil.add_weight(date_graph, 1.09)
-                | pynutil.add_weight(decimal_graph, 1.1)
-                | pynutil.add_weight(measure_graph, 1.1)
-                | pynutil.add_weight(ordinal_graph, 1.1)
-                | pynutil.add_weight(money_graph, 1.1)
-                | pynutil.add_weight(telephone_graph, 1.1)
-                | pynutil.add_weight(electronic_graph, 1.1)
-                | pynutil.add_weight(cardinal_graph, 1.1)
-                | pynutil.add_weight(word_graph, 100)
+                pynutil.add_weight(class_graphs['whitelist'], class_weights['whitelist'])
+                | pynutil.add_weight(class_graphs['time'], class_weights['time'])
+                | pynutil.add_weight(class_graphs['date'], class_weights['date'])
+                | pynutil.add_weight(class_graphs['decimal'], class_weights['decimal'])
+                | pynutil.add_weight(class_graphs['measure'], class_weights['measure'])
+                | pynutil.add_weight(class_graphs['cardinal'], class_weights['cardinal'])
+                | pynutil.add_weight(class_graphs['ordinal'], class_weights['ordinal'])
+                | pynutil.add_weight(class_graphs['money'], class_weights['money'])
+                | pynutil.add_weight(class_graphs['telephone'], class_weights['telephone'])
+                | pynutil.add_weight(class_graphs['electronic'], class_weights['electronic'])
+                | pynutil.add_weight(class_graphs['word'], class_weights['word'])
             )
 
             punct = pynutil.insert("tokens { ") + pynutil.add_weight(punct_graph, weight=1.1) + pynutil.insert(" }")

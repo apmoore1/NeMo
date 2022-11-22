@@ -44,6 +44,50 @@ class TestCardinal:
         pred = self.inverse_normalizer.inverse_normalize(test_input, verbose=False)
         assert pred == expected
 
+    testing_class_weights = {
+        'es': {
+            'cardinal': 1.01,
+            'ordinal': 100,
+            'decimal': 100,
+            'measure': 100,
+            'date': 100,
+            'word': 1.1,
+            'time': 100,
+            'money': 100,
+            'electronic': 100,
+            'telephone': 100,
+            'whitelist': 100,
+        }
+    }
+    excluded_inverse_normalizer_es = (
+        (
+            InverseNormalizer(
+                lang='es',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'es': {'cardinal': True}},
+                language_class_weights=testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+    )
+
+    @parameterized.expand(parse_test_case_file('es/data_inverse_text_normalization/test_cases_cardinal.txt'))
+    @pytest.mark.skipif(
+        not PYNINI_AVAILABLE,
+        reason="`pynini` not installed, please install via nemo_text_processing/pynini_install.sh",
+    )
+    @pytest.mark.run_only_on('CPU')
+    @pytest.mark.unit
+    def test_excluded_denorm(self, test_input, expected):
+        pred = self.excluded_inverse_normalizer_es.inverse_normalize(test_input, verbose=False)
+        examples_that_are_the_same = ['cero', 'uno', 'una', 'dos', 'nueve', ', uno', 'muchas millones']
+        if expected in examples_that_are_the_same:
+            assert pred == expected
+        else:
+            assert pred != expected
+
     normalizer = (
         Normalizer(input_case='cased', lang='es', cache_dir=CACHE_DIR, overwrite_cache=False)
         if PYNINI_AVAILABLE

@@ -55,19 +55,14 @@ class InverseNormalizer(Normalizer):
         if language_class_weights is None:
             language_class_weights = {}
 
-        excluded_classes: Dict[str, bool] = {}
-        class_weights: Dict[str, float] = {}
+        excluded_classes: Dict[str, bool] = language_excluded_classes.get(lang, {})
+        class_weights: Dict[str, float] = language_class_weights.get(lang, {})
+
         if lang == 'en':
             from nemo_text_processing.inverse_text_normalization.en.taggers.tokenize_and_classify import ClassifyFst
             from nemo_text_processing.inverse_text_normalization.en.verbalizers.verbalize_final import (
                 VerbalizeFinalFst,
             )
-
-            if 'en' in language_excluded_classes:
-                excluded_classes = language_excluded_classes['en']
-
-            if 'en' in language_class_weights:
-                class_weights = language_class_weights['en']
 
         elif lang == 'es':
             from nemo_text_processing.inverse_text_normalization.es.taggers.tokenize_and_classify import ClassifyFst
@@ -104,7 +99,7 @@ class InverseNormalizer(Normalizer):
             )
 
         self.tagger = ClassifyFst(cache_dir=cache_dir, overwrite_cache=overwrite_cache)
-        if lang == 'en':
+        if lang == 'en' or lang == 'es' or lang == 'fr' or lang == 'ru':
             self.tagger = ClassifyFst(
                 cache_dir=cache_dir,
                 overwrite_cache=overwrite_cache,

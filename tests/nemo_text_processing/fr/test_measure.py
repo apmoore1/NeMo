@@ -41,3 +41,43 @@ class TestMeasure:
     def test_denorm(self, test_input, expected):
         pred = self.inverse_normalizer.inverse_normalize(test_input, verbose=False)
         assert pred == expected
+
+    testing_class_weights = {
+        'fr': {
+            'cardinal': 100,
+            'ordinal': 100,
+            'decimal': 100,
+            'measure': 1.01,
+            'date': 100,
+            'word': 1.1,
+            'time': 100,
+            'money': 100,
+            'electronic': 100,
+            'telephone': 100,
+            'whitelist': 100,
+        }
+    }
+    excluded_inverse_normalizer_fr = (
+        (
+            InverseNormalizer(
+                lang='fr',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'fr': {'measure': True}},
+                language_class_weights=testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+    )
+
+    @parameterized.expand(parse_test_case_file('fr/data_inverse_text_normalization/test_cases_measure.txt'))
+    @pytest.mark.skipif(
+        not PYNINI_AVAILABLE,
+        reason="`pynini` not installed, please install via nemo_text_processing/pynini_install.sh",
+    )
+    @pytest.mark.run_only_on('CPU')
+    @pytest.mark.unit
+    def test_denorm(self, test_input, expected):
+        pred = self.excluded_inverse_normalizer_fr.inverse_normalize(test_input, verbose=False)
+        assert pred != expected
