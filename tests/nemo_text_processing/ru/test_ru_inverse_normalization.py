@@ -55,20 +55,7 @@ class TestRuInverseNormalize:
             'whitelist': 100,
         }
     }
-    '''
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'cardinal': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_cardinal.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -77,13 +64,27 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_cardinal(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'cardinal': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         examples_that_are_the_same = ['ноль', 'я одна', 'девять']
         if expected in examples_that_are_the_same:
             assert pred == expected
         else:
             assert pred != expected
-    '''
+    
 
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_ordinal.txt'))
     @pytest.mark.skipif(
@@ -98,20 +99,8 @@ class TestRuInverseNormalize:
 
     testing_class_weights['ru']['ordinal'] = 1.01
     testing_class_weights['ru']['cardinal'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'ordinal': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-    '''
+
+        
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_ordinal.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -120,8 +109,26 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_ordinal(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
-        assert expected != pred
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'ordinal': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        examples_that_are_the_same = ['я в первый раз']
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False) 
+        if expected in examples_that_are_the_same:
+            assert expected == pred
+        else:
+            assert expected != pred
 
     # @parameterized.expand(parse_test_case_file('ru_data_inverse_text_normalization/test_cases_ordinal_hard.txt'))
     # @pytest.mark.run_only_on('CPU')
@@ -143,20 +150,8 @@ class TestRuInverseNormalize:
 
     testing_class_weights['ru']['decimal'] = 1.01
     testing_class_weights['ru']['ordinal'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'decimal': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_decimal.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -165,7 +160,21 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_decimal(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'decimal': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected != pred
 
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_electronic.txt'))
@@ -178,23 +187,11 @@ class TestRuInverseNormalize:
     def test_denorm_electronic(self, test_input, expected):
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-
+    
     testing_class_weights['ru']['electronic'] = 1.01
     testing_class_weights['ru']['decimal'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'electronic': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_electronic.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -203,9 +200,23 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_electronic(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'electronic': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected != pred
-
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_date.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -217,22 +228,11 @@ class TestRuInverseNormalize:
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
 
+    
     testing_class_weights['ru']['date'] = 1.01
     testing_class_weights['ru']['electronic'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'date': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+   
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_date.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -241,9 +241,27 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_date(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
-        assert expected != pred
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'date': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        examples_that_are_the_same = ['первый день марта']
+        if expected in examples_that_are_the_same:
+            assert expected == pred
+        else:
+            assert expected != pred
 
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_measure.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -254,23 +272,11 @@ class TestRuInverseNormalize:
     def test_denorm_measure(self, test_input, expected):
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-
+    
     testing_class_weights['ru']['measure'] = 1.01
     testing_class_weights['ru']['date'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'measure': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
     
+        
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_measure.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -279,7 +285,21 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_measure(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'measure': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected != pred
 
     
@@ -293,23 +313,11 @@ class TestRuInverseNormalize:
     def test_denorm_money(self, test_input, expected):
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-
+    
     testing_class_weights['ru']['money'] = 1.01
     testing_class_weights['ru']['measure'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'money': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_money.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -318,9 +326,23 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_money(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'money': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected != pred
-
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_time.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -332,22 +354,11 @@ class TestRuInverseNormalize:
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
 
+    
     testing_class_weights['ru']['time'] = 1.01
     testing_class_weights['ru']['money'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'time': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+   
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_time.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -356,9 +367,23 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_time(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'time': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected != pred
-
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_whitelist.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -369,23 +394,11 @@ class TestRuInverseNormalize:
     def test_denorm_whitelist(self, test_input, expected):
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-
+    
     testing_class_weights['ru']['whitelist'] = 1.01
     testing_class_weights['ru']['time'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'whitelist': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+    
+   
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_whitelist.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -394,9 +407,27 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_whitelist(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
-        assert expected != pred
-
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'whitelist': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        examples_that_are_the_same = ['мяч был в нескольких метрах от нас', 'Высокий градус нашей дискуссии.']
+        if expected in examples_that_are_the_same:
+            assert expected == pred
+        else:
+            assert expected != pred
+    
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_word.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -407,23 +438,10 @@ class TestRuInverseNormalize:
     def test_denorm_word(self, test_input, expected):
         pred = self.normalizer.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-
+    
     testing_class_weights['ru']['word'] = 1.01
     testing_class_weights['ru']['whitelist'] = 100
-    excluded_inverse_normalizer_ru = (
-        (
-            InverseNormalizer(
-                lang='ru',
-                cache_dir=CACHE_DIR,
-                overwrite_cache=False,
-                language_excluded_classes={'ru': {'word': True}},
-                language_class_weights=testing_class_weights,
-            )
-        )
-        if PYNINI_AVAILABLE
-        else None
-    )
-
+   
     @parameterized.expand(parse_test_case_file('ru/data_inverse_text_normalization/test_cases_exclude_word.txt'))
     @pytest.mark.skipif(
         not PYNINI_AVAILABLE,
@@ -432,6 +450,19 @@ class TestRuInverseNormalize:
     @pytest.mark.run_only_on('CPU')
     @pytest.mark.unit
     def test_excluded_denorm_word(self, test_input, expected):
-        pred = self.excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
+        excluded_inverse_normalizer_ru = (
+        (
+            InverseNormalizer(
+                lang='ru',
+                cache_dir=CACHE_DIR,
+                overwrite_cache=False,
+                language_excluded_classes={'ru': {'word': True}},
+                language_class_weights=self.testing_class_weights,
+            )
+        )
+        if PYNINI_AVAILABLE
+        else None
+        )
+ 
+        pred = excluded_inverse_normalizer_ru.inverse_normalize(test_input, verbose=False)
         assert expected == pred
-'''
